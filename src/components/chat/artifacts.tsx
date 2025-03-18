@@ -2,6 +2,7 @@ import { MermaidDiagram } from "./mermaid-diagram"
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import ReactMarkdown from 'react-markdown'
+import { motion } from 'framer-motion'
 
 // Content artifact types
 export type ArtifactType = 
@@ -31,6 +32,21 @@ interface ArtifactsProps {
   artifacts: Artifact[]
   className?: string
 }
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+};
 
 // Render a single artifact based on its type
 export function ArtifactRenderer({ artifact }: { artifact: Artifact }) {
@@ -111,15 +127,34 @@ export function Artifacts({ artifacts, className = "" }: ArtifactsProps) {
   }
 
   return (
-    <div className={`my-6 space-y-6 ${className}`}>
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className={`my-6 space-y-6 ${className}`}
+    >
       {artifacts.map((artifact, index) => (
-        <div key={index} className="rounded-lg overflow-hidden border border-gray-700">
+        <motion.div
+          key={index}
+          variants={itemVariants}
+          className="rounded-lg overflow-hidden border border-gray-700"
+        >
           {artifact.title && (
-            <div className="px-4 py-2 bg-gray-800 border-b border-gray-700">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="px-4 py-2 bg-gray-800 border-b border-gray-700"
+            >
               <h3 className="text-sm font-medium text-gray-200">{artifact.title}</h3>
-            </div>
+            </motion.div>
           )}
-          <div className="p-4 bg-gray-900">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="p-4 bg-gray-900"
+          >
             {artifact.type === 'mermaid' && (
               <MermaidDiagram chart={artifact.content} />
             )}
@@ -143,10 +178,10 @@ export function Artifacts({ artifacts, className = "" }: ArtifactsProps) {
                 className="max-w-full h-auto"
               />
             )}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }
 

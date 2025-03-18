@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import mermaid from 'mermaid'
+import { ZoomIn, ZoomOut, Maximize, Minimize } from 'lucide-react'
+import { Button } from '../ui/button'
 
 interface MermaidDiagramProps {
   chart: string
@@ -38,6 +40,10 @@ export function MermaidDiagram({ chart }: MermaidDiagramProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [mermaid, setMermaid] = useState<any>(null)
+  const mermaidRef = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
+  const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -83,13 +89,26 @@ export function MermaidDiagram({ chart }: MermaidDiagramProps) {
       containerRef.current.innerHTML = ''
       
       try {
-        // Don't attempt to render if no chart or empty chart
-        if (!chart || typeof chart !== 'string' || chart.trim() === '') {
-          throw new Error('No diagram content')
+        // Make sure the diagram text is properly formatted
+        // Remove any title that might be on the first line
+        let diagramText = chart;
+        
+        // If the first line doesn't contain a diagram type declaration,
+        // assume it's a title and remove it
+        const firstLine = diagramText.split('\n')[0].trim();
+        if (!firstLine.includes('graph') && 
+            !firstLine.includes('flowchart') && 
+            !firstLine.includes('sequenceDiagram') && 
+            !firstLine.includes('classDiagram') && 
+            !firstLine.includes('stateDiagram') && 
+            !firstLine.includes('gantt') && 
+            !firstLine.includes('pie') && 
+            !firstLine.includes('erDiagram')) {
+          diagramText = diagramText.split('\n').slice(1).join('\n');
         }
 
-        // Sanitize and fix the chart
-        const cleanChart = chart.trim()
+        // Clean the diagram text
+        diagramText = diagramText.trim();
         
         // Generate unique ID
         const id = `mermaid-${Date.now()}-${Math.floor(Math.random() * 1000)}`
@@ -104,7 +123,7 @@ export function MermaidDiagram({ chart }: MermaidDiagramProps) {
         try {
           // Render the diagram with timeout to prevent hanging
           const { svg } = await Promise.race([
-            mermaid.render(id, cleanChart),
+            mermaid.render(id, diagramText),
             new Promise<never>((_, reject) => 
               setTimeout(() => reject(new Error('Diagram rendering timed out')), 5000)
             )
@@ -123,7 +142,7 @@ export function MermaidDiagram({ chart }: MermaidDiagramProps) {
               const errorEl = document.createElement('div')
               errorEl.className = 'p-4 bg-red-900/20 border border-red-500 rounded-md mt-2'
               errorEl.innerHTML = `<p class="text-red-400 mb-2">⚠️ Diagram rendering error</p>
-                <pre class="text-xs overflow-auto p-2 bg-gray-900">${cleanChart}</pre>`
+                <pre class="text-xs overflow-auto p-2 bg-gray-900">${diagramText}</pre>`
               containerRef.current.appendChild(errorEl)
             }
           }
@@ -143,19 +162,61 @@ export function MermaidDiagram({ chart }: MermaidDiagramProps) {
     }
   }, [chart])
 
+  const zoomIn = () => {
+    setScale(prev => Math.min(prev + 0.2, 2.5));
+  };
+
+  const zoomOut = () => {
+    setScale(prev => Math.max(prev - 0.2, 0.5));
+  };
+
+  const toggleExpand = () => {
+    setExpanded(prev => !prev);
+  };
+
   return (
-    <div className="w-full overflow-x-auto">
-      {isLoading && (
-        <div className="flex items-center justify-center h-40 bg-gray-900/30 rounded-md">
-          <div className="animate-spin h-6 w-6 border-2 border-blue-500 rounded-full border-t-transparent"></div>
-        </div>
-      )}
-      {error && !isLoading && (
-        <div className="p-4 bg-red-900/20 border border-red-500 rounded-md">
-          <p className="text-red-400">{error}</p>
-        </div>
-      )}
-      <div ref={containerRef} className="mermaid-diagram"></div>
+    <div className="relative w-full my-4">
+      <div 
+        className={`overflow-auto border rounded-md p-4 bg-white dark:bg-gray-950 transition-all duration-300 ${
+          expanded ? 'max-h-[80vh]' : 'max-h-[50vh]'
+        }`}
+      >
+        <div 
+          ref={containerRef}
+          className="flex justify-center transition-transform duration-200"
+          style={{ transform: `scale(${scale})`, transformOrigin: 'center top' }}
+        />
+      </div>
+      
+      <div className="absolute top-2 right-2 flex gap-1">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="h-8 w-8 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm" 
+          onClick={zoomIn}
+          title="Zoom In"
+        >
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="h-8 w-8 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm" 
+          onClick={zoomOut}
+          title="Zoom Out"
+        >
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="h-8 w-8 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm" 
+          onClick={toggleExpand}
+          title={expanded ? "Minimize" : "Maximize"}
+        >
+          {expanded ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+        </Button>
+      </div>
     </div>
   )
 }

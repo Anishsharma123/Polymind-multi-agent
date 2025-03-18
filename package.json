@@ -18,6 +18,7 @@
     "@types/mermaid": "^9.1.0",
     "@types/react-syntax-highlighter": "^15.5.13",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.5.0",
     "langchain": "^0.3.19",
     "lucide-react": "^0.475.0",
     "mermaid": "^11.4.1",
@@ -27,6 +28,7 @@
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^15.6.1",
     "tailwind-merge": "^3.0.1",
+    "typewriter-effect": "^2.21.0",
     "uuid": "^11.1.0",
     "zustand": "^5.0.3"
   },

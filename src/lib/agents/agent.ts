@@ -43,9 +43,12 @@ export async function runAgent({ agentType, userInput, chatHistory, enableArtifa
       enableArtifacts: shouldEnableArtifacts
     })
 
+    // Format the response as Markdown if it's not already
+    const formattedResponse = `\`\`\`markdown\n${response}\n\`\`\``;
+
     return {
       success: true,
-      response
+      response: formattedResponse // Return the formatted response
     }
   } catch (error) {
     console.error("Agent error:", error)
