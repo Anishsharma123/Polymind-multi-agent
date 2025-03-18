@@ -1,9 +1,7 @@
 import { cn } from "@/lib/utils"
 import { Feedback } from "./feedback"
-import { MermaidDiagram } from "./mermaid-diagram"
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { useMemo } from 'react'
+import { Artifacts, extractContentArtifacts } from './artifacts'
 
 interface MessageProps {
   id?: string
@@ -13,79 +11,11 @@ interface MessageProps {
   onFeedback?: (messageId: string, isPositive: boolean, comment?: string) => void
 }
 
-type Segment = {
-  type: 'text' | 'code';
-  content: string;
-  language?: string;
-}
-
-// Function to extract Mermaid diagrams from text - optimized version
-function extractMermaidDiagrams(text: string): { diagrams: string[], remainingText: string } {
-  // Fast path for common case - no mermaid
-  if (!text.includes('```mermaid')) {
-    return { diagrams: [], remainingText: text };
-  }
-
-  const mermaidPattern = /```mermaid\n([\s\S]*?)```/g
-  const diagrams: string[] = []
-  const remainingText = text.replace(mermaidPattern, (match, diagram) => {
-    diagrams.push(diagram.trim())
-    return ''
-  }).trim()
-  
-  return { diagrams, remainingText }
-}
-
-// Function to process code blocks - optimized version
-function processCodeBlocks(text: string): Segment[] {
-  // Fast path for common case - no code blocks
-  if (!text.includes('```')) {
-    return [{ type: 'text', content: text }];
-  }
-
-  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g
-  const segments: Segment[] = []
-  let lastIndex = 0
-  let match
-
-  while ((match = codeBlockRegex.exec(text)) !== null) {
-    // Add text before code block
-    if (match.index > lastIndex) {
-      segments.push({
-        type: 'text',
-        content: text.slice(lastIndex, match.index)
-      })
-    }
-
-    // Add code block
-    segments.push({
-      type: 'code',
-      language: match[1] || 'plaintext',
-      content: match[2].trim()
-    })
-
-    lastIndex = match.index + match[0].length
-  }
-
-  // Add remaining text
-  if (lastIndex < text.length) {
-    segments.push({
-      type: 'text',
-      content: text.slice(lastIndex)
-    })
-  }
-
-  return segments
-}
-
 export function Message({ id, content, role, isLoading, onFeedback }: MessageProps) {
-  // Memoize expensive parsing operations
-  const { diagrams, remainingText } = useMemo(() => 
-    extractMermaidDiagrams(content), [content]);
-    
-  const segments = useMemo(() => 
-    processCodeBlocks(remainingText), [remainingText]);
-
+  // Extract all content artifacts and remaining text
+  const { artifacts, remainingText } = useMemo(() => 
+    extractContentArtifacts(content), [content]);
+  
   return (
     <div className={cn(
       "px-4 py-8 w-full flex border-b",
@@ -108,32 +38,10 @@ export function Message({ id, content, role, isLoading, onFeedback }: MessagePro
               </div>
             ) : (
               <>
-                {segments.map((segment, index) => (
-                  segment.type === 'code' ? (
-                    <div key={index} className="my-4 rounded-lg overflow-hidden">
-                      <SyntaxHighlighter
-                        language={(segment as Segment & { type: 'code' }).language}
-                        style={oneDark}
-                        customStyle={{
-                          margin: 0,
-                          borderRadius: '0.5rem',
-                          background: '#1a1a1a'
-                        }}
-                      >
-                        {segment.content}
-                      </SyntaxHighlighter>
-                    </div>
-                  ) : (
-                    <p key={index} className="text-gray-200 whitespace-pre-wrap">{segment.content}</p>
-                  )
-                ))}
-                {diagrams.length > 0 && (
-                  <div className="my-6 space-y-6">
-                    {diagrams.map((diagram, index) => (
-                      <MermaidDiagram key={index} chart={diagram} />
-                    ))}
-                  </div>
+                {remainingText && (
+                  <p className="text-gray-200 whitespace-pre-wrap">{remainingText}</p>
                 )}
+                <Artifacts artifacts={artifacts} />
               </>
             )}
           </div>

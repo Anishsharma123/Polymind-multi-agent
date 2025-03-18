@@ -9,9 +9,10 @@ interface AgentInput {
   agentType: AgentType
   userInput: string
   chatHistory: string
+  enableArtifacts?: boolean
 }
 
-const createPrompt = (agentType: AgentType) => {
+const createPrompt = (agentType: AgentType, enableArtifacts?: boolean) => {
   return ChatPromptTemplate.fromTemplate(`
     ${agentPrompts[agentType]}
 
@@ -23,8 +24,8 @@ const createPrompt = (agentType: AgentType) => {
   `)
 }
 
-export async function runAgent({ agentType, userInput, chatHistory }: AgentInput) {
-  const prompt = createPrompt(agentType)
+export async function runAgent({ agentType, userInput, chatHistory, enableArtifacts = false }: AgentInput) {
+  const prompt = createPrompt(agentType, enableArtifacts)
   
   const chain = RunnableSequence.from([
     prompt,
@@ -35,7 +36,8 @@ export async function runAgent({ agentType, userInput, chatHistory }: AgentInput
   try {
     const response = await chain.invoke({
       userInput,
-      chatHistory
+      chatHistory,
+      enableArtifacts
     })
 
     return {
