@@ -1,13 +1,13 @@
-import { ChatOpenAI } from "@langchain/openai"
+import { ChatGroq } from "@langchain/groq";
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error("Missing OPENAI_API_KEY environment variable")
+if (!process.env.GROQ_API_KEY) {
+  throw new Error("Missing GROQ_API_KEY environment variable")
 }
 
-export const model = new ChatOpenAI({
-  modelName: "gpt-4-turbo-preview",
+export const model = new ChatGroq({
+  modelName: "llama-3.1-8b-instant",
   temperature: 0.7,
-  openAIApiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.GROQ_API_KEY,
 })
 
 export const agentPrompts = {

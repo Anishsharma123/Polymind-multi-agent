@@ -1,15 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { use } from 'react'
+import { useParams } from "next/navigation"
 import { Message } from '@/components/chat/message'
-import { useChatStore } from '@/store/chat'
+import { useChat } from "@/lib/hooks/use-chat"
 import Link from 'next/link'
 
-export default function ChatPage({ params }: { params: Promise<{ agentType: string }> }) {
-  const [input, setInput] = useState('')
-  const { messages, addMessage, isLoading, setLoading } = useChatStore()
-  const resolvedParams = use(params)
+export default function ChatPage() {
+  const { agentType } = useParams()
+  const { messages, addMessage, isLoading, setLoading } = useChat(agentType as string)
+  const [input, setInput] = useState('') // Add this line - it was missing
   
   const agentNames = {
     cultural: "Cultural Agent",
@@ -17,7 +17,7 @@ export default function ChatPage({ params }: { params: Promise<{ agentType: stri
     missing: "What's Missing Agent"
   }
 
-  const agentName = agentNames[resolvedParams.agentType as keyof typeof agentNames] || "Unknown Agent"
+  const agentName = agentNames[agentType as keyof typeof agentNames] || "Unknown Agent"
 
   const handleFeedback = async (messageId: string, isPositive: boolean, comment?: string) => {
     try {
@@ -30,7 +30,7 @@ export default function ChatPage({ params }: { params: Promise<{ agentType: stri
           messageId,
           isPositive,
           comment,
-          agentType: resolvedParams.agentType,
+          agentType: agentType,
         }),
       })
     } catch (error) {
@@ -57,7 +57,7 @@ export default function ChatPage({ params }: { params: Promise<{ agentType: stri
         },
         body: JSON.stringify({
           messages: [...messages, { role: 'user', content: input }],
-          agentType: resolvedParams.agentType,
+          agentType: agentType,
         }),
       })
 
@@ -83,11 +83,11 @@ export default function ChatPage({ params }: { params: Promise<{ agentType: stri
   }
 
   return (
-    <div className="flex flex-col h-screen bg-black text-gray-200">
+    <div key={agentType} className="flex flex-col h-screen bg-black text-gray-200">
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
         <div>
           <h1 className="text-xl font-semibold text-white">{agentName}</h1>
-          {resolvedParams.agentType === 'cultural' && (
+          {agentType === 'cultural' && (
             <p className="text-sm text-gray-400 mt-1">
               Specialized in cultural analysis with diverse source integration and visualization capabilities
             </p>
@@ -106,7 +106,7 @@ export default function ChatPage({ params }: { params: Promise<{ agentType: stri
           <Message
             role="assistant"
             content={`Hello! I'm your ${agentName}. ${
-              resolvedParams.agentType === 'cultural' 
+              agentType === 'cultural' 
                 ? "I can help you understand cultural phenomena, traditions, and societal changes. I can also create visualizations and provide context from diverse sources."
                 : "How can I assist you today?"
             }`}
@@ -138,7 +138,7 @@ export default function ChatPage({ params }: { params: Promise<{ agentType: stri
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={
-              resolvedParams.agentType === 'cultural'
+              agentType === 'cultural'
                 ? "Ask about cultural trends, traditions, or request a visualization..."
                 : "Type your message..."
             }
@@ -155,4 +155,4 @@ export default function ChatPage({ params }: { params: Promise<{ agentType: stri
       </form>
     </div>
   )
-} 
+}
