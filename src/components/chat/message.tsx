@@ -3,6 +3,7 @@ import { Feedback } from "./feedback"
 import { MermaidDiagram } from "./mermaid-diagram"
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { useMemo } from 'react'
 
 interface MessageProps {
   id?: string
@@ -12,8 +13,19 @@ interface MessageProps {
   onFeedback?: (messageId: string, isPositive: boolean, comment?: string) => void
 }
 
-// Function to extract Mermaid diagrams from text
+type Segment = {
+  type: 'text' | 'code';
+  content: string;
+  language?: string;
+}
+
+// Function to extract Mermaid diagrams from text - optimized version
 function extractMermaidDiagrams(text: string): { diagrams: string[], remainingText: string } {
+  // Fast path for common case - no mermaid
+  if (!text.includes('```mermaid')) {
+    return { diagrams: [], remainingText: text };
+  }
+
   const mermaidPattern = /```mermaid\n([\s\S]*?)```/g
   const diagrams: string[] = []
   const remainingText = text.replace(mermaidPattern, (match, diagram) => {
@@ -24,10 +36,15 @@ function extractMermaidDiagrams(text: string): { diagrams: string[], remainingTe
   return { diagrams, remainingText }
 }
 
-// Function to process code blocks
-function processCodeBlocks(text: string) {
+// Function to process code blocks - optimized version
+function processCodeBlocks(text: string): Segment[] {
+  // Fast path for common case - no code blocks
+  if (!text.includes('```')) {
+    return [{ type: 'text', content: text }];
+  }
+
   const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g
-  const segments: Array<{ type: 'text' | 'code', content: string, language?: string }> = []
+  const segments: Segment[] = []
   let lastIndex = 0
   let match
 
@@ -62,8 +79,12 @@ function processCodeBlocks(text: string) {
 }
 
 export function Message({ id, content, role, isLoading, onFeedback }: MessageProps) {
-  const { diagrams, remainingText } = extractMermaidDiagrams(content)
-  const segments = processCodeBlocks(remainingText)
+  // Memoize expensive parsing operations
+  const { diagrams, remainingText } = useMemo(() => 
+    extractMermaidDiagrams(content), [content]);
+    
+  const segments = useMemo(() => 
+    processCodeBlocks(remainingText), [remainingText]);
 
   return (
     <div className={cn(
@@ -91,7 +112,7 @@ export function Message({ id, content, role, isLoading, onFeedback }: MessagePro
                   segment.type === 'code' ? (
                     <div key={index} className="my-4 rounded-lg overflow-hidden">
                       <SyntaxHighlighter
-                        language={segment.language}
+                        language={(segment as Segment & { type: 'code' }).language}
                         style={oneDark}
                         customStyle={{
                           margin: 0,
