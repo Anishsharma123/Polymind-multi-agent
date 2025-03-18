@@ -5,11 +5,12 @@ import { useParams } from "next/navigation"
 import { Message } from '@/components/chat/message'
 import { useChat } from "@/lib/hooks/use-chat"
 import Link from 'next/link'
+import { Trash2 } from 'lucide-react'
 
 export default function ChatPage() {
   const { agentType } = useParams()
-  const { messages, addMessage, isLoading, setLoading } = useChat(agentType as string)
-  const [input, setInput] = useState('') // Add this line - it was missing
+  const { messages, addMessage, isLoading, setLoading, clearMessages } = useChat(agentType as string)
+  const [input, setInput] = useState('')
   
   const agentNames = {
     cultural: "Cultural Agent",
@@ -83,7 +84,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div key={agentType} className="flex flex-col h-screen bg-black text-gray-200">
+    <div key={String(agentType)} className="flex flex-col h-screen bg-black text-gray-200">
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
         <div>
           <h1 className="text-xl font-semibold text-white">{agentName}</h1>
@@ -93,12 +94,21 @@ export default function ChatPage() {
             </p>
           )}
         </div>
-        <Link 
-          href="/" 
-          className="text-blue-400 hover:text-blue-300 transition-colors"
-        >
-          ← Back to Dashboard
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={clearMessages}
+            className="text-gray-400 hover:text-red-400 transition-colors"
+            title="Clear chat history"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+          <Link 
+            href="/" 
+            className="text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            ← Back to Dashboard
+          </Link>
+        </div>
       </div>
       
       <div className="flex-1 overflow-y-auto">

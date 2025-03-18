@@ -8,7 +8,7 @@ export interface Message {
   content: string;
 }
 
-export function useChat(agentType: string) {
+export function useChat(agentType: string, startFresh = false) {
   // Store messages in localStorage with agentType as key prefix
   const localStorageKey = `chat-history-${agentType}`;
   
@@ -16,23 +16,28 @@ export function useChat(agentType: string) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Load messages from localStorage on component mount
+  // Load messages from localStorage on component mount (or clear them if startFresh is true)
   useEffect(() => {
     // Only run in browser context
     if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(localStorageKey);
-        if (stored) {
-          setMessages(JSON.parse(stored));
-        } else {
+      if (startFresh) {
+        localStorage.removeItem(localStorageKey);
+        setMessages([]);
+      } else {
+        try {
+          const stored = localStorage.getItem(localStorageKey);
+          if (stored) {
+            setMessages(JSON.parse(stored));
+          } else {
+            setMessages([]);
+          }
+        } catch (error) {
+          console.error('Failed to load messages from localStorage:', error);
           setMessages([]);
         }
-      } catch (error) {
-        console.error('Failed to load messages from localStorage:', error);
-        setMessages([]);
       }
     }
-  }, [agentType, localStorageKey]);
+  }, [agentType, localStorageKey, startFresh]);
   
   // Save messages to localStorage whenever they change
   useEffect(() => {
