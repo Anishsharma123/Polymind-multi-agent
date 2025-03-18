@@ -25,7 +25,10 @@ const createPrompt = (agentType: AgentType, enableArtifacts?: boolean) => {
 }
 
 export async function runAgent({ agentType, userInput, chatHistory, enableArtifacts = false }: AgentInput) {
-  const prompt = createPrompt(agentType, enableArtifacts)
+  // Always enable artifacts for cultural agent
+  const shouldEnableArtifacts = agentType === 'cultural' ? true : enableArtifacts
+  
+  const prompt = createPrompt(agentType, shouldEnableArtifacts)
   
   const chain = RunnableSequence.from([
     prompt,
@@ -37,7 +40,7 @@ export async function runAgent({ agentType, userInput, chatHistory, enableArtifa
     const response = await chain.invoke({
       userInput,
       chatHistory,
-      enableArtifacts
+      enableArtifacts: shouldEnableArtifacts
     })
 
     return {

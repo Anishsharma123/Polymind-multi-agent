@@ -41,7 +41,7 @@ export function Message({ id, content, role, isLoading, onFeedback }: MessagePro
                 {remainingText && (
                   <p className="text-gray-200 whitespace-pre-wrap">{remainingText}</p>
                 )}
-                <Artifacts artifacts={artifacts} />
+                {artifacts.length > 0 && <Artifacts artifacts={artifacts} />}
               </>
             )}
           </div>
